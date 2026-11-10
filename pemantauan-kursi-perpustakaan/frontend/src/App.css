@@ -1,0 +1,752 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  font-family: Arial, sans-serif;
+  background: #ffffff;
+}
+
+/* Bagian gambar */
+.login-visual {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #173b32;
+}
+
+.login-visual img {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  object-fit: cover;
+  inset: 0;
+}
+
+.login-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.75),
+    rgba(0, 0, 0, 0.05)
+  );
+}
+
+.visual-overlay {
+  position: absolute;
+  z-index: 1;
+  bottom: 60px;
+  left: 50px;
+  right: 40px;
+  color: white;
+}
+
+.visual-overlay h1 {
+  font-size: 42px;
+  margin-bottom: 15px;
+  text-transform: capitalize;
+  color: #ffffff;
+  
+}
+
+.visual-overlay p {
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 430px;
+}
+
+/* Bagian form */
+.login-form-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-label {
+  color: #537b65;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+
+.login-form h2 {
+  font-size: 34px;
+  color: #1d3028;
+  margin-bottom: 12px;
+}
+
+.login-form > p:not(.login-label):not(.login-note) {
+  color: #777;
+  line-height: 1.6;
+  margin-bottom: 35px;
+}
+
+.login-form form {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #34483d;
+  margin-bottom: 9px;
+}
+
+.login-form input {
+  padding: 14px;
+  border: 1px solid #dce3de;
+  border-radius: 8px;
+  margin-bottom: 23px;
+  font-size: 14px;
+  outline: none;
+}
+
+.login-form input:focus {
+  border-color: #537b65;
+}
+
+.login-form button {
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  background: #315c46;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.login-form button:hover {
+  background: #244735;
+}
+
+.login-note {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  margin-top: 25px;
+}
+
+/* Tampilan HP */
+@media (max-width: 768px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-visual {
+    min-height: 280px;
+  }
+
+  .visual-overlay {
+    left: 25px;
+    bottom: 25px;
+  }
+
+  .visual-overlay h1 {
+    font-size: 28px;
+     color: #ffffff;
+  }
+
+  .login-form-section {
+    padding: 40px 25px;
+  }
+}
+
+
+/* FOOTER */
+.site-footer {
+  background: #173e32;
+  color: white;
+  padding: 45px 7% 20px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 35px;
+  padding-bottom: 35px;
+}
+
+.footer-brand h3 {
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.footer-brand p,
+.footer-column p,
+.footer-column a {
+  color: #d5e5dc;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-column h4 {
+  margin-bottom: 8px;
+}
+
+.footer-column a {
+  text-decoration: none;
+}
+
+.footer-column a:hover {
+  color: #a8d5b8;
+}
+
+.footer-bottom {
+  border-top: 1px solid #557467;
+  padding-top: 20px;
+  text-align: center;
+  color: #d5e5dc;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+
+/* SIDEBAR RESPONSIVE */
+.sidebar {
+  width: 230px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #ffffff;
+  border-right: 1px solid #dce5df;
+  display: flex;
+  flex-direction: column;
+  padding: 25px 18px;
+  z-index: 100;
+  transition: width 0.3s ease;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.sidebar-brand h3 {
+  font-size: 14px;
+  color: #25352e;
+}
+
+.sidebar-brand p {
+  font-size: 12px;
+  color: #168443;
+}
+
+.sidebar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #52665b;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sidebar-menu a.active {
+  background-color: #e5f3e9;
+  color: #168443;
+  font-weight: 600;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 190px;
+    padding: 20px 12px;
+  }
+
+  .visitor-content {
+    margin-left: 190px;
+    width: calc(100% - 190px);
+  }
+}
+
+/* HP */
+@media (max-width: 600px) {
+  .sidebar {
+    width: 180px;
+    padding: 20px 12px;
+  }
+
+  .sidebar-brand h3,
+  .sidebar-brand p,
+  .menu-label,
+  .sidebar-bottom {
+    display: block;
+  }
+
+  .sidebar-menu a {
+    justify-content: flex-start;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .visitor-content {
+    margin-left: 180px;
+    width: calc(100% - 180px);
+  }
+}
+
+/* LOGIN TYPOGRAPHY */
+.login-page {
+  font-family: 'Poppins', sans-serif;
+}
+
+.visual-overlay h1 {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.8px;
+}
+
+.visual-overlay p {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.8;
+}
+
+.login-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+}
+
+.login-form h2 {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.7px;
+}
+
+.login-form > p:not(.login-label):not(.login-note) {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.8;
+}
+
+.login-form label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login-form input {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+}
+
+.login-form input::placeholder {
+  color: #a0aaa3;
+  font-size: 12px;
+}
+
+.login-form button {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.login-note {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+
+/* VISITOR DASHBOARD */
+.visitor-page {
+  min-height: 100vh;
+  padding: 35px 40px;
+  background: #f5f7f6;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* HEADER SAMBUTAN */
+.visitor-header {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 14px;
+  margin-bottom: 25px;
+  border: 1px solid #e8eee9;
+}
+
+.visitor-label {
+  color: #168443;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.visitor-header h1 {
+  color: #173e32;
+  font-size: 25px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.visitor-header p:last-child {
+  color: #78847d;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* KARTU STATISTIK */
+.visitor-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.stat-card {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 14px;
+  border: 1px solid #e8eee9;
+  box-shadow: 0 3px 12px rgba(30, 60, 45, 0.04);
+}
+
+.stat-card h3 {
+  color: #168443;
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.stat-card p {
+  color: #78847d;
+  font-size: 13px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .visitor-page {
+    padding: 20px;
+  }
+
+  .visitor-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .visitor-header h1 {
+    font-size: 20px;
+  }
+}
+
+/* BANNER PEMILIHAN KURSI */
+.visitor-banner {
+  margin-top: 25px;
+  padding: 35px 40px;
+  min-height: 220px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #173e32, #2e7952);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  overflow: hidden;
+}
+
+.banner-text {
+  max-width: 480px;
+}
+
+.banner-text p {
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  color: #b9dfc5;
+}
+
+.banner-text h2 {
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+.banner-text span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  color: #e1eee5;
+}
+
+.banner-button {
+  display: inline-block;
+  padding: 11px 18px;
+  background: white;
+  color: #173e32;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.banner-decoration {
+  font-size: 85px;
+  opacity: 0.85;
+}
+
+/* PANDUAN MEMILIH KURSI */
+.guide-section {
+  margin-top: 40px;
+  padding-bottom: 30px;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.guide-card {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 14px;
+  border: 1px solid #e8eee9;
+}
+
+.guide-number {
+  display: inline-block;
+  color: #168443;
+  background: #e5f3e9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.guide-card h3 {
+  color: #173e32;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.guide-card p {
+  color: #78847d;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+  .guide-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* DENAH KURSI */
+.seat-map {
+  display: grid;
+  grid-template-columns: repeat(4, 60px);
+  gap: 15px;
+  padding: 25px;
+  background: white;
+  border-radius: 14px;
+  width: fit-content;
+}
+
+.seat {
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seat.available {
+  background: #dff3e5;
+  color: #168443;
+}
+
+.seat.occupied {
+  background: #fce4e4;
+  color: #c0392b;
+  cursor: not-allowed;
+}
+
+/* KURSI YANG DIPILIH */
+.seat.selected {
+  background: #168443;
+  color: #ffffff;
+  border: 2px solid #0d6030;
+  transform: scale(1.05);
+}
+
+/* PANEL KONFIRMASI */
+.confirmation-panel {
+  width: 100%;
+  max-width: 420px;
+  margin: 25px auto 0;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e2ebe4;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(23, 62, 50, 0.06);
+}
+
+.confirmation-panel p {
+  color: #168443;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.confirmation-panel h3 {
+  color: #173e32;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.confirmation-panel span {
+  color: #78847d;
+  font-size: 12px;
+}
+
+.confirmation-panel label {
+  display: block;
+  color: #52665b;
+  font-size: 12px;
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.confirmation-panel select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dce5df;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #173e32;
+  font-family: inherit;
+}
+
+.confirmation-panel button {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+  background: #168443;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirmation-panel button:hover {
+  background: #126b36;
+}
+
+/* HALAMAN RIWAYAT */
+.history-section {
+  margin-top: 30px;
+}
+
+.history-section h2 {
+  color: #173e32;
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.history-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 25px;
+  background: #ffffff;
+  border: 1px solid #e8eee9;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(30, 60, 45, 0.04);
+}
+
+.history-card h3 {
+  color: #173e32;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.history-card p {
+  color: #78847d;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.history-status {
+  padding: 7px 13px;
+  background: #e5f3e9;
+  color: #168443;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .history-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.cancel-button {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 10px;
+  transition: 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #fecaca;
+}
+
