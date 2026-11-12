@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getApiStatus, getFloors } from "./api";
 import "./App.css";
 
 // DATA DENAH KURSI PERSIS SESUAI PDF (Lantai 1, 3, dan 4)
@@ -189,6 +190,16 @@ const INITIAL_HISTORY = [
 
 export default function App() {
   // Navigation & Auth State
+  const [apiStatus, setApiStatus] = useState("Menghubungkan...");
+  useEffect(() => {
+  getApiStatus()
+    .then((data) => {
+      setApiStatus(data.message);
+    })
+    .catch(() => {
+      setApiStatus("Backend tidak terhubung");
+    });
+}, []);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeMenu, setActiveMenu] = useState("home"); // 'home' | 'seats' | 'history'
   
@@ -214,6 +225,18 @@ export default function App() {
   const [duration, setDuration] = useState(2); // 1, 2, atau 3 jam
   const [conflictSeat, setConflictSeat] = useState(null); // Untuk simulasi error PDF Hal 10
   const [showSuccessModal, setShowSuccessModal] = useState(false); // Untuk PDF Hal 9
+
+  // Mengambil data lantai dari backend
+useEffect(() => {
+  getFloors()
+    .then((data) => {
+      setFloors(data);
+      console.log("Data lantai berhasil diambil:", data);
+    })
+    .catch((error) => {
+      console.error("Gagal mengambil data lantai:", error);
+    });
+}, []);
 
   // History & Detail Modal States
   const [historyList, setHistoryList] = useState(INITIAL_HISTORY);
@@ -391,17 +414,10 @@ export default function App() {
 
           <div className="hero-text-box slide-up">
             <div className="tagline">
-              <span className="line-accent"></span>
-              RUANG UNTUK BERTUMBUH
+              <span className=""></span>
             </div>
-            <h1>
-              Ide besar dimulai
-              <br />
-              dari satu tempat.
-            </h1>
             <p>
-              Pilih kursimu, temukan fokusmu. Lebih mudah merencanakan waktu
-              belajar di kampus.
+
             </p>
 
             <div className="hero-stats">
@@ -430,15 +446,11 @@ export default function App() {
               <br />
               kembali.
             </h2>
-            <p className="subtitle">
-              Masuk untuk menemukan tempat terbaikmu di Perpustakaan UPNVJ.
-            </p>
 
             <form onSubmit={handleLogin}>
               <div className="form-group">
                 <label>NIM / Email</label>
                 <div className="input-box">
-                  <span className="icon-left">👤</span>
                   <input
                     type="text"
                     value={nim}
@@ -452,7 +464,6 @@ export default function App() {
               <div className="form-group">
                 <label>Password</label>
                 <div className="input-box">
-                  <span className="icon-left">🔒</span>
                   <input
                     type={showPass ? "text" : "password"}
                     value={password}
@@ -498,40 +509,10 @@ export default function App() {
               <button type="submit" className="btn-primary-full">
                 Login <span>&rarr;</span>
               </button>
-
-              {/* Tombol bantu untuk mengetes tampilan Login Gagal di PDF Hal 3 */}
-              <div className="demo-helper">
-                <small>Mode Demo PDF:</small>
-                <button
-                  type="button"
-                  className="btn-demo-mini"
-                  onClick={() => {
-                    setNim("2310511042");
-                    setPassword("12345678");
-                  }}
-                >
-                  Isi Akun Benar
-                </button>
-                <button
-                  type="button"
-                  className="btn-demo-mini danger"
-                  onClick={handleSimulateFailedLogin}
-                >
-                  Tes Notif Login Gagal
-                </button>
-              </div>
             </form>
 
-            <div className="info-banner">
-              <span>ℹ️</span>
-              <p>
-                Gunakan akun akademik UPNVJ yang terdaftar. Akses khusus
-                mahasiswa aktif.
-              </p>
-            </div>
-
             <div className="help-footer">
-              Kesulitan masuk?{" "}
+              {" "}
               <button
                 type="button"
                 className="text-btn-green"
@@ -549,6 +530,7 @@ export default function App() {
 
             <div className="copyright-text">
               🛡️ &copy; 2026 Perpustakaan UPNVJ &bull; Akses aman kampus
+              <small>API: {apiStatus}</small>
             </div>
           </div>
         </div>
@@ -607,7 +589,7 @@ export default function App() {
               className={`menu-item ${activeMenu === "home" ? "active" : ""}`}
               onClick={() => setActiveMenu("home")}
             >
-              <span>🏠</span> Home
+              <span></span> Home
             </button>
             <button
               className={`menu-item ${activeMenu === "seats" ? "active" : ""}`}
@@ -616,7 +598,7 @@ export default function App() {
                 setClaimStep(1);
               }}
             >
-              <span>🪑</span> Denah Kursi
+              <span></span> Denah Kursi
             </button>
             <button
               className={`menu-item ${
@@ -624,7 +606,7 @@ export default function App() {
               }`}
               onClick={() => setActiveMenu("history")}
             >
-              <span>🕒</span> Riwayat
+              <span></span> Riwayat
             </button>
           </div>
         </div>
@@ -651,8 +633,7 @@ export default function App() {
         {/* TOPBAR HEADER */}
         <header className="topbar">
           <div>
-            <h4>Halo, Nadia 👋</h4>
-            <span>Selasa, 20 Oktober 2026</span>
+            <h4>Halo, Nadia </h4>
           </div>
           <div className="topbar-actions">
             <button
@@ -684,7 +665,7 @@ export default function App() {
           {/* ============================================================== */}
           {activeMenu === "home" && (
             <div className="home-view slide-up">
-              <span className="section-tag">DASHBOARD MAHASISWA</span>
+
               <h1 className="page-title">
                 Belajar lebih nyaman, mulai di sini.
               </h1>
@@ -697,48 +678,37 @@ export default function App() {
                 <div className="stat-card">
                   <div className="stat-header">
                     <span>Total kursi</span>
-                    <span className="stat-icon">🪑</span>
+                    <span className="stat-icon"></span>
                   </div>
                   <h2>
                     140 <small>kursi</small>
                   </h2>
-                  <p>Tersebar di 3 lantai</p>
                 </div>
 
                 <div className="stat-card highlight-green">
                   <div className="stat-header">
                     <span>Tersedia</span>
-                    <span className="stat-icon">✅</span>
+                    <span className="stat-icon"></span>
                   </div>
                   <h2>
                     117 <small>kursi</small>
                   </h2>
-                  <p className="green-text">● Siap untuk diklaim</p>
                 </div>
 
                 <div className="stat-card">
                   <div className="stat-header">
                     <span>Terisi</span>
-                    <span className="stat-icon">🔴</span>
+                    <span className="stat-icon"></span>
                   </div>
                   <h2>
                     23 <small>kursi</small>
                   </h2>
-                  <p className="red-text">● Sedang digunakan</p>
                 </div>
               </div>
 
               {/* Banner Hijau Utama */}
               <div className="cta-banner">
                 <div className="cta-left">
-                  <span className="open-pill">
-                    ● PERPUSTAKAAN BUKA &bull; 08.00–20.00 WIB
-                  </span>
-                  <h2>Tempat nyaman untuk ide hebatmu.</h2>
-                  <p>
-                    Pilih kursi favorit dan atur waktu belajarmu. Klaim tempat
-                    sebelum mulai beraktivitas.
-                  </p>
                   <button
                     className="btn-white-cta"
                     onClick={() => {
@@ -751,10 +721,8 @@ export default function App() {
                 </div>
 
                 <div className="cta-right-box">
-                  <span className="now-label">SAAT INI</span>
                   <h3>117</h3>
                   <p>kursi tersedia</p>
-                  <small>Diperbarui 10.00 WIB</small>
                 </div>
               </div>
 
@@ -788,12 +756,7 @@ export default function App() {
                           }}
                         ></div>
                       </div>
-                      <div className="floor-card-bottom">
-                        <strong className="green-text">
-                          ● {f.available} tersedia
-                        </strong>
-                        <span>dari {f.total} kursi</span>
-                      </div>
+    
                     </div>
                   );
                 })}
@@ -807,21 +770,18 @@ export default function App() {
                     <div className="step-num">1</div>
                     <div>
                       <strong>Pilih kursi</strong>
-                      <p>Cek denah dan kursi tersedia.</p>
                     </div>
                   </div>
                   <div className="step-col">
                     <div className="step-num">2</div>
                     <div>
                       <strong>Atur durasi</strong>
-                      <p>Pilih waktu belajar 1–3 jam.</p>
                     </div>
                   </div>
                   <div className="step-col">
                     <div className="step-num">3</div>
                     <div>
                       <strong>Mulai belajar</strong>
-                      <p>Gunakan kursi sesuai klaimmu.</p>
                     </div>
                   </div>
                 </div>
@@ -842,8 +802,8 @@ export default function App() {
               </h1>
               <p className="page-subtitle">
                 {claimStep === 1
-                  ? "Pilih kursi hijau yang tersedia. Kamu dapat memilih hingga 3 kursi."
-                  : "Periksa detail kursi dan tentukan durasi sebelum klaim."}
+                  ? "."
+                  : "                                                      "}
               </p>
 
               {/* Stepper Wizard Interaktif */}
@@ -954,14 +914,13 @@ export default function App() {
                   </div>
 
                   <p className="map-Caption">
-                    ℹ️ Kursi merah sedang digunakan dan tidak dapat dipilih.
+                     Kursi merah sedang digunakan dan tidak dapat dipilih.
                     Ketersediaan diperiksa lagi saat klaim.
                   </p>
 
                   {/* Bottom Bar Pemilihan Kursi */}
                   <div className="selection-bottom-bar">
                     <div className="selection-info">
-                      <div className="seat-icon-box">🪑</div>
                       <div>
                         <strong>{selectedSeats.length} kursi dipilih</strong>
                         <p>
@@ -1143,7 +1102,7 @@ export default function App() {
                             durasi belajarmu.
                           </p>
                           <div className="empty-record-note">
-                            ℹ️ Belum ada klaim yang tercatat di riwayat.
+                            Belum ada klaim yang tercatat di riwayat.
                           </div>
                           <button
                             className="btn-outline-full"
