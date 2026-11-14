@@ -1,8 +1,228 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getApiStatus, getFloors } from "./api";
 import "./App.css";
 
-// DATA DENAH KURSI PERSIS SESUAI PDF (Lantai 1, 3, dan 4)
+
+// Peta denah berdasarkan tiga source map yang diberikan.
+// Posisi objek mengikuti koordinat asli pada masing-masing source.
+function MapSeat({ id, top, left, w = 28, h = 24, seats, selectedSeats, onSeatClick }) {
+  const seat = seats.find((item) => item.id === id);
+  const occupied = seat?.status === "occupied";
+  const selected = selectedSeats.includes(id) && !occupied;
+
+  return (
+    <button
+      key={`${id}-${top}-${left}`}
+      type="button"
+      className={`map-seat ${occupied ? "occupied" : selected ? "selected" : "available"}`}
+      style={{ top, left, width: w, height: h }}
+      onClick={() => seat && onSeatClick(seat)}
+      disabled={!seat || occupied}
+      title={`${id} - ${occupied ? "Terisi" : "Tersedia"}`}
+    >
+      {id}
+    </button>
+  );
+}
+
+function MapWall({ top, left, w, h, side = "left" }) {
+  return (
+    <div
+      className={`map-wall ${side}`}
+      style={{ top, left, width: w, height: h }}
+    />
+  );
+}
+
+function MapTable({ top, left, w = 62, h = 26, round = false }) {
+  return (
+    <div
+      className={`map-table ${round ? "round" : ""}`}
+      style={{ top, left, width: w, height: h }}
+    />
+  );
+}
+
+function MapDivider({ top, left, w = 7, h = 45 }) {
+  return <div className="map-divider" style={{ top, left, width: w, height: h }} />;
+}
+
+function MapLegend() {
+  return (
+    <div className="map-legend map-legend-floor">
+      <span><i className="dot green" /> Tersedia</span>
+      <span><i className="dot red" /> Terisi / nonaktif</span>
+      <span><i className="dot blue" /> Dipilih</span>
+    </div>
+  );
+}
+
+function SeatMap({ floorId, seats, selectedSeats, onSeatClick }) {
+  const viewportRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  const dimensions = {
+    1: { width: 610, height: 350, sourceWidth: 700, sourceHeight: 380, minX: 60, minY: 25 },
+    3: { width: 700, height: 350, sourceWidth: 850, sourceHeight: 450, minX: 40, minY: 35 },
+    4: { width: 680, height: 340, sourceWidth: 900, sourceHeight: 450, minX: 135, minY: 55 },
+  }[floorId] || { width: 680, height: 340, sourceWidth: 900, sourceHeight: 450, minX: 135, minY: 55 };
+
+  useEffect(() => {
+    const element = viewportRef.current;
+    if (!element) return;
+    const updateScale = () => {
+      const availableWidth = Math.max(200, element.clientWidth - 48);
+      const availableHeight = Math.max(200, element.clientHeight - 88);
+      setScale(Math.min(availableWidth / dimensions.width, availableHeight / dimensions.height));
+    };
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [floorId, dimensions.width, dimensions.height]);
+
+  const seat = (id, top, left, w = 28, h = 24) => (
+    <MapSeat
+      key={`${id}-${top}-${left}`}
+      id={id}
+      top={top}
+      left={left}
+      w={w}
+      h={h}
+      seats={seats}
+      selectedSeats={selectedSeats}
+      onSeatClick={onSeatClick}
+    />
+  );
+
+  const renderMap = (children, className = "") => (
+    <div ref={viewportRef} className={`map-floor-viewport ${className}`}>
+      <div
+        className="map-coordinate-map"
+        style={{
+          width: dimensions.width,
+          height: dimensions.height,
+          transform: `scale(${scale})`,
+        }}
+      >
+        <div
+          className="map-geometry"
+          style={{ left: -dimensions.minX, top: -dimensions.minY, width: dimensions.sourceWidth, height: dimensions.sourceHeight }}
+        >
+          {children}
+        </div>
+      </div>
+      <MapLegend />
+    </div>
+  );
+
+  if (floorId === 1) {
+    return renderMap(<>
+      {/* Dinding dan meja sesuai source map Lantai 1 */}
+      <MapWall top={65} left={60} w={2} h={180} />
+      <MapWall top={245} left={60} w={15} h={2} side="horizontal" />
+      <MapWall top={245} left={75} w={2} h={15} />
+      <MapWall top={275} left={60} w={2} h={60} />
+      <div className="map-door" style={{ top: 255, left: 90 }}> Pintu masuk ↑</div>
+      <MapWall top={245} left={170} w={500} h={2} side="horizontal" />
+      <MapTable top={260} left={195} w={175} h={25} />
+      <MapTable top={350} left={195} w={175} h={25} />
+      <MapTable top={255} left={495} w={35} h={35} round />
+      {seat("RD00", 25, 75, 85, 35)}
+      {seat("RD01", 25, 165, 70, 65)}
+      {seat("A12", 75, 95)}{seat("A11", 102, 95)}{seat("A10", 129, 95)}
+      {seat("A09", 156, 95)}{seat("A08", 183, 95)}{seat("A07", 210, 95)}
+      {seat("RD02", 98, 165, 70, 35)}{seat("A15", 140, 165, 70, 25)}
+      {seat("A08", 295, 205)}{seat("A07", 295, 260)}{seat("A06", 295, 315)}
+      {seat("A01", 355, 205)}{seat("A02", 355, 260)}{seat("A03", 355, 315)}
+      {seat("A16", 262, 450, 35, 25)}{seat("A18", 262, 540, 35, 25)}{seat("A17", 300, 495, 35, 25)}
+    </>, "floor-one");
+  }
+
+  if (floorId === 3) {
+    return renderMap(<>
+      {/* Dinding dan pintu sesuai source map Lantai 3 */}
+      <MapWall top={35} left={80} w={2} h={125} />
+      <MapWall top={210} left={80} w={2} h={170} />
+      <MapWall top={200} left={100} w={35} h={2} side="horizontal" />
+      <MapWall top={200} left={135} w={2} h={185} side="right" />
+      <MapWall top={35} left={235} w={2} h={140} />
+      <MapWall top={35} left={335} w={2} h={140} />
+      <MapWall top={35} left={480} w={2} h={105} />
+      <MapWall top={140} left={480} w={235} h={2} side="horizontal" />
+      <MapWall top={140} left={715} w={2} h={100} />
+      <MapWall top={270} left={715} w={2} h={110} />
+      <MapWall top={320} left={340} w={2} h={60} />
+      <MapWall top={320} left={465} w={2} h={60} />
+      <MapWall top={320} left={590} w={2} h={60} />
+      <div className="map-door map-door-vertical" style={{ top: 165, left: 60 }}> Pintu masuk ↑</div>
+      <div className="map-door" style={{ top: 145, left: 725 }}> Pintu ↑</div>
+      {/* Kursi blok kiri */}
+      {seat("RD05", 330, 40, 40, 50)}
+      {[["C01",210],["C02",235],["C03",260],["C04",285],["C05",310],["C06",335],["C07",360]].map(([id, top]) => seat(id, top, 100, 28, id === "C07" ? 25 : 22))}
+      {[["C08",235],["C09",260],["C10",285],["C11",310],["C12",335],["C13",360]].map(([id, top]) => seat(id, top, 145, 28, id === "C13" ? 25 : 22))}
+      {/* Kursi blok atas */}
+      {seat("C35",45,165,60,30)}{seat("C37",45,245)}{seat("C38",45,275)}{seat("C39",45,305)}
+      {seat("C36",85,255,65,40)}
+      {seat("C41",45,345)}{seat("C42",45,375)}{seat("C43",45,405)}{seat("C44",45,435)}
+      {seat("C40",85,360,65,40)}{seat("C45",75,435)}{seat("C46",100,435)}
+      {seat("C49",55,490,24,24)}{seat("C50",40,518,24,24)}{seat("C48",85,490,24,24)}{seat("C47",100,518,24,24)}
+      {seat("C55",45,565)}{seat("C56",45,595)}{seat("C57",45,625)}{seat("C58",45,655)}
+      {seat("C51",85,565)}{seat("C52",85,595)}{seat("C53",85,625)}{seat("C54",85,655)}
+      {/* Empat cluster meja tengah */}
+      {[
+        { x: 225, ids: ["C18","C19","C20","C21"] },
+        { x: 335, ids: ["C22","C23","C24","C25"] },
+        { x: 445, ids: ["C26","C27","C28","C29"] },
+        { x: 555, ids: ["C30","C31","C32","C33"] },
+      ].map(({x,ids}) => <React.Fragment key={ids[0]}>
+        {seat(ids[0],215,x)}{seat(ids[1],255,x)}<MapTable top={215} left={x+35}/>
+        {seat(ids[2],215,x+70)}{seat(ids[3],255,x+70)}
+      </React.Fragment>)}
+      {/* Kursi lebar bagian bawah */}
+      {seat("C14",330,215,110,45)}{seat("C15",330,345,110,45)}
+      {seat("C16",330,470,110,45)}{seat("C17",330,595,110,45)}
+    </>, "floor-three");
+  }
+
+  return renderMap(<>
+    {/* Dinding dan pembatas sesuai source map Lantai 4 */}
+    <MapWall top={65} left={135} w={2} h={235} />
+    <MapWall top={300} left={135} w={60} h={2} side="horizontal" />
+    <MapWall top={235} left={195} w={2} h={65} />
+    <MapWall top={55} left={625} w={2} h={65} />
+    <MapWall top={55} left={710} w={2} h={65} />
+    <MapWall top={300} left={265} w={550} h={2} side="horizontal" />
+    <div className="map-door" style={{ top: 293, left: 210 }}> Pintu ↓</div>
+    <div className="map-door" style={{ top: 293, left: 400 }}> Pintu ↓</div>
+    {[...Array(16)].map((_,i) => <MapDivider key={`top-${i}`} top={55} left={155+i*29} w={7} h={45}/>)}
+    {seat("RD03",60,635,70,50)}{seat("RD04",60,720,70,50)}
+    {["D34","D33","D32","D31","D30","D29"].map((id,i) => seat(id,115+i*31,140))}
+    {seat("D35",175,175)}{seat("D36",206,175)}
+    {[
+      {top:["D39","D40"],bottom:["D37","D38"]},
+      {top:["D43","D44"],bottom:["D41","D42"]},
+      {top:["D47","D48"],bottom:["D45","D46"]},
+      {top:["D51","D52"],bottom:["D49","D50"]},
+      {top:["D55","D56"],bottom:["D53","D54"]},
+      {top:["D59","D60"],bottom:["D57","D58"]},
+    ].map((group,i) => {
+      const x=300+i*78;
+      return <React.Fragment key={`group-${i}`}>
+        {seat(group.top[0],135,x)}{seat(group.top[1],135,x+32)}
+        <MapTable top={165} left={x-2} w={64} h={30}/>
+        {seat(group.bottom[0],200,x)}{seat(group.bottom[1],200,x+32)}
+      </React.Fragment>;
+    })}
+    {[0,1,2].map(i => <MapDivider key={`bottom-left-${i}`} top={240} left={305+i*28} w={7} h={45}/>)}
+    {[...Array(11)].map((_,i) => <MapDivider key={`bottom-right-${i}`} top={240} left={465+i*29} w={7} h={45}/>)}
+    {seat("D28",315,290)}{seat("D27",315,322)}{seat("D26",315,354)}
+    {["D25","D24","D23","D22","D21","D20","D19","D18","D17","D16"].map((id,i) => seat(id,315,455+i*32))}
+    {["D01","D02","D03","D04","D05"].map((id,i) => seat(id,350,290+i*32))}
+    {["D06","D07","D08","D09","D10","D11","D12","D13","D14","D15"].map((id,i) => seat(id,350,455+i*32))}
+  </>, "floor-four");
+}
+
 const INITIAL_FLOORS = {
   1: {
     id: 1,
@@ -451,6 +671,7 @@ useEffect(() => {
               <div className="form-group">
                 <label>NIM / Email</label>
                 <div className="input-box">
+                  <span className="icon-left">👤</span>
                   <input
                     type="text"
                     value={nim}
@@ -464,6 +685,7 @@ useEffect(() => {
               <div className="form-group">
                 <label>Password</label>
                 <div className="input-box">
+                  <span className="icon-left">🔒</span>
                   <input
                     type={showPass ? "text" : "password"}
                     value={password}
@@ -802,7 +1024,7 @@ useEffect(() => {
               </h1>
               <p className="page-subtitle">
                 {claimStep === 1
-                  ? "."
+                  ? "               ."
                   : "                                                      "}
               </p>
 
@@ -870,46 +1092,12 @@ useEffect(() => {
 
                     {/* Kanvas Kursi Sesuai Lantai */}
                     <div className="map-canvas">
-                      <div className="door-indicator">🚪 Pintu Masuk &rarr;</div>
-
-                      <div className="seats-grid-layout">
-                        {currentFloorObj.seats.map((seat) => {
-                          const isSelected = selectedSeats.includes(seat.id);
-                          let seatClass = "seat-box ";
-                          if (seat.type === "large" || seat.type === "room")
-                            seatClass += "seat-large ";
-                          if (seat.type === "wide" || seat.type === "table")
-                            seatClass += "seat-wide ";
-
-                          if (seat.status === "occupied")
-                            seatClass += "occupied";
-                          else if (isSelected) seatClass += "selected";
-                          else seatClass += "available";
-
-                          return (
-                            <button
-                              key={seat.id}
-                              className={seatClass}
-                              onClick={() => toggleSeat(seat)}
-                            >
-                              {seat.id}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Legenda Warna Kursi */}
-                      <div className="map-legend">
-                        <span>
-                          <i className="dot green"></i> Tersedia
-                        </span>
-                        <span>
-                          <i className="dot red"></i> Terisi / nonaktif
-                        </span>
-                        <span>
-                          <i className="dot blue"></i> Dipilih
-                        </span>
-                      </div>
+                      <SeatMap
+                        floorId={selectedFloor}
+                        seats={currentFloorObj.seats}
+                        selectedSeats={selectedSeats}
+                        onSeatClick={toggleSeat}
+                      />
                     </div>
                   </div>
 
