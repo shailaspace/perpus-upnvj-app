@@ -6,8 +6,9 @@ export async function getApiStatus() {
   return res.json();
 }
 
-export async function getFloors() {
-  const res = await fetch(`${API_URL}/floors`);
+export async function getFloors(date) {
+  const query = date ? `?date=${encodeURIComponent(date)}` : "";
+  const res = await fetch(`${API_URL}/floors${query}`);
   if (!res.ok) throw new Error("Gagal mengambil data lantai");
   return res.json();
 }

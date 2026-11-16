@@ -357,22 +357,22 @@ const tomorrowISO = formatDateISO(nextOpenDayObj);
 
   // Mengambil data lantai dari backend + Supabase
   useEffect(() => {
-    const loadFloors = () => {
-      getFloors()
-        .then((data) => {
-          if (data && data[1] && data[3] && data[4]) {
-            setFloors(data);
-          }
-        })
-        .catch((error) => {
-          console.error("Gagal mengambil data lantai:", error);
-        });
-    };
+  const loadFloors = () => {
+    getFloors(bookingDate)
+      .then((data) => {
+        if (data && data[1] && data[3] && data[4]) {
+          setFloors(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Gagal mengambil data lantai:", error);
+      });
+  };
 
-    loadFloors();
-    const interval = setInterval(loadFloors, 15000);
-    return () => clearInterval(interval);
-  }, []);
+  loadFloors();
+  const interval = setInterval(loadFloors, 15000);
+  return () => clearInterval(interval);
+}, [bookingDate]);
 
   // History & Detail Modal States
   const [historyList, setHistoryList] = useState([]);
@@ -1218,6 +1218,56 @@ const tomorrowISO = formatDateISO(nextOpenDayObj);
 
               {claimStep === 1 && (
                 <>
+                  <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    background: "#ffffff",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    border: "1px solid #E2E8F0",
+    marginBottom: "14px",
+  }}
+>
+  <div>
+    <strong style={{ fontSize: "14px", display: "block" }}>
+      Tanggal Kunjungan: {selectedDateLabel}
+    </strong>
+    <small style={{ color: "#64748B" }}>
+      Denah menampilkan kursi merah yang sudah dipesan pada tanggal ini.
+    </small>
+  </div>
+  <input
+    type="date"
+    min={isLibraryClosedNow ? tomorrowISO : todayISO}
+    value={bookingDate}
+    onChange={(e) => {
+      const val = e.target.value;
+      const pickedDay = new Date(`${val}T00:00:00`).getDay();
+      if (pickedDay === 0) {
+        triggerToast(
+          "Perpustakaan Tutup (Minggu)",
+          "Perpustakaan UPNVJ tutup pada hari Minggu. Silakan pilih Senin–Sabtu.",
+          "error"
+        );
+        return;
+      }
+      setBookingDate(val);
+      setSelectedSeats([]);
+      if (val === todayISO && startHour < currentHourNow) {
+        setStartHour(Math.max(8, currentHourNow));
+      }
+    }}
+    style={{
+      padding: "8px 12px",
+      borderRadius: "10px",
+      border: "1px solid #CBD5E1",
+      fontSize: "14px",
+    }}
+  />
+</div>
                   <div className="floor-tabs">
                     {[1, 3, 4].map((fId) => (
                       <button
