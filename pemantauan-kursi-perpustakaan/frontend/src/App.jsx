@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getApiStatus, getFloors } from "./api";
+import {
+  getApiStatus,
+  getFloors,
+  loginMahasiswa,
+  registerMahasiswa,
+  sendResetCode,
+  confirmResetPassword,
+  getHistory,
+  claimSeats,
+} from "./api";
 import "./App.css";
 
-
-// Peta denah berdasarkan tiga source map yang diberikan.
-// Posisi objek mengikuti koordinat asli pada masing-masing source.
 function MapSeat({ id, top, left, w = 28, h = 24, seats, selectedSeats, onSeatClick }) {
   const seat = seats.find((item) => item.id === id);
   const occupied = seat?.status === "occupied";
@@ -118,7 +124,6 @@ function SeatMap({ floorId, seats, selectedSeats, onSeatClick }) {
 
   if (floorId === 1) {
     return renderMap(<>
-      {/* Dinding dan meja sesuai source map Lantai 1 */}
       <MapWall top={65} left={60} w={2} h={180} />
       <MapWall top={245} left={60} w={15} h={2} side="horizontal" />
       <MapWall top={245} left={75} w={2} h={15} />
@@ -141,7 +146,6 @@ function SeatMap({ floorId, seats, selectedSeats, onSeatClick }) {
 
   if (floorId === 3) {
     return renderMap(<>
-      {/* Dinding dan pintu sesuai source map Lantai 3 */}
       <MapWall top={35} left={80} w={2} h={125} />
       <MapWall top={210} left={80} w={2} h={170} />
       <MapWall top={200} left={100} w={35} h={2} side="horizontal" />
@@ -157,11 +161,9 @@ function SeatMap({ floorId, seats, selectedSeats, onSeatClick }) {
       <MapWall top={320} left={590} w={2} h={60} />
       <div className="map-door map-door-vertical" style={{ top: 165, left: 60 }}> Pintu masuk ↑</div>
       <div className="map-door" style={{ top: 145, left: 725 }}> Pintu ↑</div>
-      {/* Kursi blok kiri */}
       {seat("RD05", 330, 40, 40, 50)}
       {[["C01",210],["C02",235],["C03",260],["C04",285],["C05",310],["C06",335],["C07",360]].map(([id, top]) => seat(id, top, 100, 28, id === "C07" ? 25 : 22))}
       {[["C08",235],["C09",260],["C10",285],["C11",310],["C12",335],["C13",360]].map(([id, top]) => seat(id, top, 145, 28, id === "C13" ? 25 : 22))}
-      {/* Kursi blok atas */}
       {seat("C35",45,165,60,30)}{seat("C37",45,245)}{seat("C38",45,275)}{seat("C39",45,305)}
       {seat("C36",85,255,65,40)}
       {seat("C41",45,345)}{seat("C42",45,375)}{seat("C43",45,405)}{seat("C44",45,435)}
@@ -169,7 +171,6 @@ function SeatMap({ floorId, seats, selectedSeats, onSeatClick }) {
       {seat("C49",55,490,24,24)}{seat("C50",40,518,24,24)}{seat("C48",85,490,24,24)}{seat("C47",100,518,24,24)}
       {seat("C55",45,565)}{seat("C56",45,595)}{seat("C57",45,625)}{seat("C58",45,655)}
       {seat("C51",85,565)}{seat("C52",85,595)}{seat("C53",85,625)}{seat("C54",85,655)}
-      {/* Empat cluster meja tengah */}
       {[
         { x: 225, ids: ["C18","C19","C20","C21"] },
         { x: 335, ids: ["C22","C23","C24","C25"] },
@@ -179,14 +180,12 @@ function SeatMap({ floorId, seats, selectedSeats, onSeatClick }) {
         {seat(ids[0],215,x)}{seat(ids[1],255,x)}<MapTable top={215} left={x+35}/>
         {seat(ids[2],215,x+70)}{seat(ids[3],255,x+70)}
       </React.Fragment>)}
-      {/* Kursi lebar bagian bawah */}
       {seat("C14",330,215,110,45)}{seat("C15",330,345,110,45)}
       {seat("C16",330,470,110,45)}{seat("C17",330,595,110,45)}
     </>, "floor-three");
   }
 
   return renderMap(<>
-    {/* Dinding dan pembatas sesuai source map Lantai 4 */}
     <MapWall top={65} left={135} w={2} h={235} />
     <MapWall top={300} left={135} w={60} h={2} side="horizontal" />
     <MapWall top={235} left={195} w={2} h={65} />
@@ -235,22 +234,10 @@ const INITIAL_FLOORS = {
       { id: "RD00", type: "table", status: "available" },
       { id: "RD01", type: "table", status: "available" },
       { id: "RD02", type: "table", status: "available" },
-      { id: "A01", status: "available" },
-      { id: "A02", status: "available" },
-      { id: "A03", status: "available" },
-      { id: "A04", status: "available" },
-      { id: "A05", status: "available" },
-      { id: "A06", status: "available" },
-      { id: "A07", status: "available" },
-      { id: "A08", status: "available" },
-      { id: "A09", status: "available" },
-      { id: "A10", status: "available" },
-      { id: "A11", status: "available" },
-      { id: "A12", status: "available" },
-      { id: "A15", status: "available" },
-      { id: "A16", status: "available" },
-      { id: "A17", status: "available" },
-      { id: "A18", status: "available" },
+      ...Array.from({ length: 16 }, (_, i) => {
+        const ids = ["A01","A02","A03","A04","A05","A06","A07","A08","A09","A10","A11","A12","A15","A16","A17","A18"];
+        return { id: ids[i], status: "available" };
+      }),
     ],
   },
   3: {
@@ -258,67 +245,14 @@ const INITIAL_FLOORS = {
     name: "Lantai 3",
     area: "Area Baca Umum",
     desc: "Koleksi buku utama & meja baca standar",
-    total: 59,
-    available: 36,
+    total: 58,
+    available: 58,
     seats: [
       { id: "RD05", type: "room", status: "available" },
-      { id: "C01", status: "occupied" },
-      { id: "C02", status: "available" },
-      { id: "C03", status: "occupied" },
-      { id: "C04", status: "available" },
-      { id: "C05", status: "occupied" },
-      { id: "C06", status: "occupied" },
-      { id: "C07", status: "available" },
-      { id: "C08", status: "available" },
-      { id: "C09", status: "available" },
-      { id: "C10", status: "available" },
-      { id: "C11", status: "available" },
-      { id: "C12", status: "available" }, // Bisa disimulasikan gagal/terisi di tahap Konfirmasi
-      { id: "C13", status: "available" },
-      { id: "C14", type: "large", status: "available" },
-      { id: "C15", type: "large", status: "occupied" },
-      { id: "C16", type: "large", status: "available" },
-      { id: "C17", type: "large", status: "occupied" },
-      { id: "C18", status: "occupied" },
-      { id: "C19", status: "available" },
-      { id: "C20", status: "available" },
-      { id: "C21", status: "available" },
-      { id: "C22", status: "occupied" },
-      { id: "C23", status: "available" },
-      { id: "C24", status: "available" },
-      { id: "C25", status: "available" },
-      { id: "C26", status: "occupied" },
-      { id: "C27", status: "available" },
-      { id: "C28", status: "available" },
-      { id: "C29", status: "available" },
-      { id: "C30", status: "occupied" },
-      { id: "C31", status: "available" },
-      { id: "C32", status: "available" },
-      { id: "C33", status: "available" },
-      { id: "C35", type: "wide", status: "occupied" },
-      { id: "C36", type: "wide", status: "occupied" },
-      { id: "C37", status: "available" },
-      { id: "C38", status: "available" },
-      { id: "C39", status: "available" },
-      { id: "C40", type: "wide", status: "occupied" },
-      { id: "C41", status: "available" },
-      { id: "C42", status: "available" },
-      { id: "C43", status: "available" },
-      { id: "C44", status: "available" },
-      { id: "C45", status: "available" },
-      { id: "C46", status: "available" },
-      { id: "C47", status: "available" },
-      { id: "C48", status: "occupied" },
-      { id: "C49", status: "available" },
-      { id: "C50", status: "occupied" },
-      { id: "C51", status: "available" },
-      { id: "C52", status: "available" },
-      { id: "C53", status: "occupied" },
-      { id: "C54", status: "available" },
-      { id: "C55", status: "available" },
-      { id: "C56", status: "available" },
-      { id: "C57", status: "occupied" },
-      { id: "C58", status: "occupied" },
+      ...Array.from({ length: 58 }, (_, i) => ({
+        id: `C${String(i + 1).padStart(2, "0")}`,
+        status: "available",
+      })).filter((s) => s.id !== "C34"),
     ],
   },
   4: {
@@ -331,140 +265,138 @@ const INITIAL_FLOORS = {
     seats: [
       { id: "RD03", type: "room", status: "available" },
       { id: "RD04", type: "room", status: "available" },
-      ...Array.from({ length: 60 }, (_, i) => {
-        const num = String(i + 1).padStart(2, "0");
-        return { id: `D${num}`, status: "available" };
-      }),
+      ...Array.from({ length: 60 }, (_, i) => ({
+        id: `D${String(i + 1).padStart(2, "0")}`,
+        status: "available",
+      })),
     ],
   },
 };
 
-const INITIAL_HISTORY = [
-  {
-    code: "KLM-201026-042",
-    seats: ["C07", "C12", "C13"],
-    floor: "Lantai 3",
-    area: "Baca Umum",
-    date: "20 Okt 2026",
-    fullDate: "20 Oktober 2026",
-    time: "10.00-12.00 WIB",
-    duration: "2 jam",
-    status: "Aktif",
-  },
-  {
-    code: "KLM-191026-031",
-    seats: ["C05"],
-    floor: "Lantai 3",
-    area: "Baca Umum",
-    date: "19 Okt 2026",
-    fullDate: "19 Oktober 2026",
-    time: "13.00-15.00 WIB",
-    duration: "2 jam",
-    status: "Selesai",
-  },
-  {
-    code: "KLM-161026-018",
-    seats: ["A08"],
-    floor: "Lantai 1",
-    area: "Area Kolaborasi",
-    date: "16 Okt 2026",
-    fullDate: "16 Oktober 2026",
-    time: "09.00-10.00 WIB",
-    duration: "1 jam",
-    status: "Selesai",
-  },
-  {
-    code: "KLM-151026-024",
-    seats: ["D02"],
-    floor: "Lantai 4",
-    area: "Area Belajar Hening",
-    date: "15 Okt 2026",
-    fullDate: "15 Oktober 2026",
-    time: "10.00-13.00 WIB",
-    duration: "3 jam",
-    status: "Selesai",
-  },
-  {
-    code: "KLM-131026-027",
-    seats: ["A06"],
-    floor: "Lantai 1",
-    area: "Area Kolaborasi",
-    date: "13 Okt 2026",
-    fullDate: "13 Oktober 2026",
-    time: "14.00-16.00 WIB",
-    duration: "2 jam",
-    status: "Selesai",
-  },
-  {
-    code: "KLM-121026-009",
-    seats: ["D07"],
-    floor: "Lantai 4",
-    area: "Area Belajar Hening",
-    date: "12 Okt 2026",
-    fullDate: "12 Oktober 2026",
-    time: "08.00-09.00 WIB",
-    duration: "1 jam",
-    status: "Selesai",
-  },
-];
-
 export default function App() {
-  // Navigation & Auth State
   const [apiStatus, setApiStatus] = useState("Menghubungkan...");
   useEffect(() => {
-  getApiStatus()
-    .then((data) => {
-      setApiStatus(data.message);
-    })
-    .catch(() => {
-      setApiStatus("Backend tidak terhubung");
-    });
-}, []);
+    getApiStatus()
+      .then((data) => {
+        setApiStatus(data.message);
+      })
+      .catch(() => {
+        setApiStatus("Backend tidak terhubung");
+      });
+  }, []);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeMenu, setActiveMenu] = useState("home"); // 'home' | 'seats' | 'history'
-  
-  // Login Form States
+  const [currentUser, setCurrentUser] = useState({
+    nim: "2310511042",
+    nama: "Nadia Putri",
+    email: "2310511042@mahasiswa.upnvj.ac.id",
+    fakultas: "Ilmu Komputer",
+  });
+  const [activeMenu, setActiveMenu] = useState("home");
+
+  // Mode Form Auth: 'login' | 'register' | 'forgot'
+  const [authMode, setAuthMode] = useState("login");
   const [nim, setNim] = useState("2310511042");
   const [password, setPassword] = useState("12345678");
+  const [namaLengkap, setNamaLengkap] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
-  // Toast Notification State (Mirip PDF Hal 2 & 3)
   const [toast, setToast] = useState({
     show: false,
     title: "",
     message: "",
-    type: "success", // 'success' | 'error'
+    type: "success",
   });
 
   // Seat Claiming States
   const [floors, setFloors] = useState(INITIAL_FLOORS);
   const [selectedFloor, setSelectedFloor] = useState(3);
-  const [selectedSeats, setSelectedSeats] = useState(["C07", "C12", "C13"]);
-  const [claimStep, setClaimStep] = useState(1); // 1: Pilih Kursi, 2: Konfirmasi, 3: Selesai (Modal)
-  const [duration, setDuration] = useState(2); // 1, 2, atau 3 jam
-  const [conflictSeat, setConflictSeat] = useState(null); // Untuk simulasi error PDF Hal 10
-  const [showSuccessModal, setShowSuccessModal] = useState(false); // Untuk PDF Hal 9
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [claimStep, setClaimStep] = useState(1);
+  const [duration, setDuration] = useState(2);
+  const [conflictSeat, setConflictSeat] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Mengambil data lantai dari backend
-useEffect(() => {
-  getFloors()
-    .then((data) => {
-      setFloors(data);
-      console.log("Data lantai berhasil diambil:", data);
-    })
-    .catch((error) => {
-      console.error("Gagal mengambil data lantai:", error);
-    });
-}, []);
+  // Pengaturan Jam Operasional (08.00 - 20.00 WIB) & Pilih Tanggal/Jam
+  const nowJakarta = new Date();
+const currentHourNow = nowJakarta.getHours();
+const isSundayToday = nowJakarta.getDay() === 0;
+const isLibraryClosedNow = isSundayToday || currentHourNow >= 20 || currentHourNow < 8;
+
+const formatDateISO = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const todayISO = formatDateISO(nowJakarta);
+const nextOpenDayObj = new Date(nowJakarta);
+nextOpenDayObj.setDate(nowJakarta.getDate() + 1);
+if (nextOpenDayObj.getDay() === 0) {
+  nextOpenDayObj.setDate(nextOpenDayObj.getDate() + 1); // Loncat Minggu -> Senin
+}
+const tomorrowISO = formatDateISO(nextOpenDayObj);
+
+  const [bookingDate, setBookingDate] = useState(
+    isLibraryClosedNow ? tomorrowISO : todayISO
+  );
+  const [startHour, setStartHour] = useState(
+    isLibraryClosedNow ? 8 : Math.max(8, currentHourNow)
+  );
+
+  const selectedDateLabel = new Date(`${bookingDate}T00:00:00`).toLocaleDateString(
+    "id-ID",
+    { day: "numeric", month: "long", year: "numeric" }
+  );
+
+  // Mengambil data lantai dari backend + Supabase
+  useEffect(() => {
+    const loadFloors = () => {
+      getFloors()
+        .then((data) => {
+          if (data && data[1] && data[3] && data[4]) {
+            setFloors(data);
+          }
+        })
+        .catch((error) => {
+          console.error("Gagal mengambil data lantai:", error);
+        });
+    };
+
+    loadFloors();
+    const interval = setInterval(loadFloors, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   // History & Detail Modal States
-  const [historyList, setHistoryList] = useState(INITIAL_HISTORY);
-  const [historyFilter, setHistoryFilter] = useState("Semua"); // 'Semua' | 'Aktif' | 'Selesai'
+  const [historyList, setHistoryList] = useState([]);
+  const [historyFilter, setHistoryFilter] = useState("Semua");
   const [detailModalItem, setDetailModalItem] = useState(null);
   const [profileModal, setProfileModal] = useState(false);
 
-  // Helper Toast
+  // Tanggal Real-Time
+  const todayObj = new Date();
+  const todayShort = todayObj.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const currentMonthYear = todayObj.toLocaleDateString("id-ID", {
+    month: "long",
+    year: "numeric",
+  });
+
+  // Hitung statistik real-time dari data lantai Supabase
+  const totalSeatsAll = Object.values(floors).reduce((acc, f) => acc + (f.total || 0), 0);
+  const availableSeatsAll = Object.values(floors).reduce((acc, f) => acc + (f.available || 0), 0);
+  const occupiedSeatsAll = totalSeatsAll - availableSeatsAll;
+
   const triggerToast = (title, message, type = "success") => {
     setToast({ show: true, title, message, type });
     setTimeout(() => {
@@ -472,38 +404,112 @@ useEffect(() => {
     }, 3500);
   };
 
-  // 1. HANDLER LOGIN (PDF Hal 1, 2, 3)
-  const handleLogin = (e) => {
+  // 1. HANDLER LOGIN KE SUPABASE
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (nim.trim() === "2310511042" && password.length >= 4) {
+    try {
+      const user = await loginMahasiswa(nim.trim(), password);
+      setCurrentUser(user);
+
+      // Ambil riwayat klaim asli milik akun ini dari Supabase
+      const userHistory = await getHistory(user.nim);
+      setHistoryList(Array.isArray(userHistory) ? userHistory : []);
+
+      const firstName = (user.nama || "Mahasiswa").split(" ")[0];
       triggerToast(
         "Login berhasil",
-        "Selamat datang, Nadia! Mengalihkan ke Home...",
+        `Selamat datang, ${firstName}! Mengalihkan ke Home...`,
         "success"
       );
+
       setTimeout(() => {
         setIsLoggedIn(true);
         setActiveMenu("home");
-      }, 1200);
-    } else {
+      }, 1000);
+    } catch (err) {
       triggerToast(
         "Login gagal",
-        "NIM / email atau password salah. Silakan coba lagi.",
+        err.message || "NIM / email atau password salah. Silakan coba lagi.",
         "error"
       );
     }
   };
 
-  // Simulasi tombol cepat Login Gagal (untuk demo PDF Hal 3)
-  const handleSimulateFailedLogin = () => {
-    triggerToast(
-      "Login gagal",
-      "NIM / email atau password salah. Silakan coba lagi.",
-      "error"
-    );
+  // 1B. HANDLER DAFTAR AKUN BARU KE SUPABASE
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await registerMahasiswa({
+        nim: nim.trim(),
+        nama: namaLengkap.trim(),
+        email: emailInput.trim(),
+        password,
+      });
+
+      triggerToast(
+        "Pendaftaran Berhasil",
+        res.message || "Akun berhasil disimpan ke database. Silakan login.",
+        "success"
+      );
+      setAuthMode("login");
+    } catch (err) {
+      triggerToast(
+        "Pendaftaran Gagal",
+        err.message || "Gagal mendaftarkan akun.",
+        "error"
+      );
+    }
   };
 
-  // 2. HANDLER PILIH KURSI (PDF Hal 5, 6, 7)
+  // 1C. HANDLER LUPA PASSWORD
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await sendResetCode(emailInput.trim());
+      setOtpSent(true);
+      triggerToast(
+        "Kode Verifikasi Terkirim",
+        res.devOtp
+          ? `${res.message} (Kode Demo: ${res.devOtp})`
+          : res.message,
+        "success"
+      );
+    } catch (err) {
+      triggerToast(
+        "Gagal Mengirim Kode",
+        err.message || "Email tidak ditemukan.",
+        "error"
+      );
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await confirmResetPassword(
+        emailInput.trim(),
+        otpCode.trim(),
+        newPassword
+      );
+      triggerToast(
+        "Password Diperbarui",
+        res.message || "Password berhasil diubah di database.",
+        "success"
+      );
+      setAuthMode("login");
+      setOtpSent(false);
+      setOtpCode("");
+      setNewPassword("");
+    } catch (err) {
+      triggerToast(
+        "Reset Password Gagal",
+        err.message || "Kode verifikasi salah atau kadaluarsa.",
+        "error"
+      );
+    }
+  };
+
+  // 2. HANDLER PILIH KURSI
   const handleSelectFloor = (floorId) => {
     setSelectedFloor(floorId);
     setSelectedSeats([]);
@@ -536,7 +542,7 @@ useEffect(() => {
     }
   };
 
-  // 3. HANDLER KONFIRMASI & KLAIM (PDF Hal 8, 9, 10)
+  // 3. HANDLER KONFIRMASI & KLAIM PERMANEN KE SUPABASE
   const handleProceedToConfirm = () => {
     if (selectedSeats.length === 0) {
       triggerToast(
@@ -550,14 +556,12 @@ useEffect(() => {
     setClaimStep(2);
   };
 
-  // Simulasi Error Kursi C12 Diserobot Orang Lain (Persis PDF Hal 10)
   const handleSimulateConflict = () => {
     const targetSeat = selectedSeats.includes("C12")
       ? "C12"
       : selectedSeats[0];
     setConflictSeat(targetSeat);
 
-    // Tandai kursi tersebut menjadi merah (occupied) di state lantai
     setFloors((prev) => {
       const current = prev[selectedFloor];
       const updatedSeats = current.seats.map((s) =>
@@ -580,8 +584,7 @@ useEffect(() => {
     );
   };
 
-  // Eksekusi Klaim Berhasil (Persis PDF Hal 9)
-  const handleConfirmClaim = () => {
+  const handleConfirmClaim = async () => {
     if (conflictSeat) {
       triggerToast(
         "Pilih Ulang Kursi",
@@ -591,33 +594,52 @@ useEffect(() => {
       return;
     }
 
-    const endHour = 10 + duration;
-    const newClaim = {
-      code: `KLM-201026-0${Math.floor(40 + Math.random() * 50)}`,
-      seats: [...selectedSeats],
-      floor: `Lantai ${selectedFloor}`,
-      area: floors[selectedFloor].area.replace("Area ", ""),
-      date: "20 Okt 2026",
-      fullDate: "20 Oktober 2026",
-      time: `10.00-${endHour}.00 WIB`,
-      duration: `${duration} jam`,
-      status: "Aktif",
-    };
+    try {
+      const result = await claimSeats({
+        floorId: selectedFloor,
+        seats: selectedSeats,
+        duration,
+        nim: currentUser.nim,
+        bookingDate,
+        startHour,
+      });
 
-    // Tambahkan ke riwayat paling atas
-    setHistoryList([newClaim, ...historyList.map(h => ({...h, status: "Selesai"}))]);
-    setClaimStep(3);
-    setShowSuccessModal(true);
+      if (result.floors) {
+        setFloors(result.floors);
+      }
+
+      const updatedHistory = await getHistory(currentUser.nim);
+      setHistoryList(Array.isArray(updatedHistory) ? updatedHistory : []);
+
+      setClaimStep(3);
+      setShowSuccessModal(true);
+    } catch (err) {
+      if (err.conflictSeat) {
+        setConflictSeat(err.conflictSeat);
+        const latestFloors = await getFloors();
+        if (latestFloors) setFloors(latestFloors);
+      }
+      triggerToast(
+        "Klaim gagal",
+        err.message || "Gagal menyimpan klaim ke Supabase.",
+        "error"
+      );
+    }
   };
 
+  const userInitials = (currentUser.nama || "NP")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   // ============================================================================
-  // RENDER HALAMAN 1 - 3: LOGIN SPLIT SCREEN
+  // RENDER HALAMAN LOGIN / DAFTAR / LUPA PASSWORD
   // ============================================================================
   if (!isLoggedIn) {
     return (
       <div className="login-wrapper fade-in">
-        {/* SISI KIRI: VISUAL INTERIOR PERPUSTAKAAN */}
-        {/* SISI KIRI: VISUAL PERPUSTAKAAN */}
         <div
           className="login-left"
           style={{
@@ -634,15 +656,13 @@ useEffect(() => {
 
           <div className="hero-text-box slide-up">
             <div className="tagline">
-              <span className=""></span>
+              <span></span>
             </div>
-            <p>
-
-            </p>
+            <p></p>
 
             <div className="hero-stats">
               <div>
-                <h3>140</h3>
+                <h3>{totalSeatsAll}</h3>
                 <span>Kursi belajar</span>
               </div>
               <div>
@@ -657,107 +677,253 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* SISI KANAN: FORM LOGIN */}
         <div className="login-right">
           <div className="login-box slide-up">
             <span className="portal-badge">PORTAL MAHASISWA</span>
-            <h2>
-              Selamat datang
-              <br />
-              kembali.
-            </h2>
 
-            <form onSubmit={handleLogin}>
-              <div className="form-group">
-                <label>NIM / Email</label>
-                <div className="input-box">
-                  <span className="icon-left">👤</span>
-                  <input
-                    type="text"
-                    value={nim}
-                    onChange={(e) => setNim(e.target.value)}
-                    placeholder="Masukkan NIM atau email"
-                    required
-                  />
-                </div>
-              </div>
+            {authMode === "login" && (
+              <>
+                <h2>
+                  Selamat datang
+                  <br />
+                  kembali.
+                </h2>
 
-              <div className="form-group">
-                <label>Password</label>
-                <div className="input-box">
-                  <span className="icon-left">🔒</span>
-                  <input
-                    type={showPass ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Masukkan password"
-                    required
-                  />
+                <form onSubmit={handleLogin}>
+                  <div className="form-group">
+                    <label>NIM / Email</label>
+                    <div className="input-box">
+                      <span className="icon-left">👤</span>
+                      <input
+                        type="text"
+                        value={nim}
+                        onChange={(e) => setNim(e.target.value)}
+                        placeholder="Masukkan NIM atau email"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Password</label>
+                    <div className="input-box">
+                      <span className="icon-left">🔒</span>
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Masukkan password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="icon-right-btn"
+                        onClick={() => setShowPass(!showPass)}
+                        title="Lihat/Sembunyikan Password"
+                      >
+                        {showPass ? "👁️" : "🙈"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                      />
+                      <span>Ingat saya</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="text-btn-green"
+                      onClick={() => {
+                        setAuthMode("forgot");
+                        setOtpSent(false);
+                      }}
+                    >
+                      Lupa password?
+                    </button>
+                  </div>
+
+                  <button type="submit" className="btn-primary-full">
+                    Login <span>&rarr;</span>
+                  </button>
+                </form>
+
+                <div className="help-footer">
+                  <span>Belum punya akun? </span>
                   <button
                     type="button"
-                    className="icon-right-btn"
-                    onClick={() => setShowPass(!showPass)}
-                    title="Lihat/Sembunyikan Password"
+                    className="text-btn-green"
+                    onClick={() => {
+                      setAuthMode("register");
+                      setNim("");
+                      setPassword("");
+                    }}
                   >
-                    {showPass ? "👁️" : "🙈"}
+                    Daftar di sini
                   </button>
                 </div>
-              </div>
+              </>
+            )}
 
-              <div className="form-row">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  <span>Ingat saya</span>
-                </label>
-                <button
-                  type="button"
-                  className="text-btn-green"
-                  onClick={() =>
-                    triggerToast(
-                      "Reset Password",
-                      "Tautan pemulihan kata sandi telah dikirim ke email UPNVJ Anda.",
-                      "success"
-                    )
-                  }
-                >
-                  Lupa password?
-                </button>
-              </div>
+            {authMode === "register" && (
+              <>
+                <h2>Daftar Akun Baru</h2>
+                <form onSubmit={handleRegister}>
+                  <div className="form-group">
+                    <label>Nama Lengkap</label>
+                    <div className="input-box">
+                      <span className="icon-left">🪪</span>
+                      <input
+                        type="text"
+                        value={namaLengkap}
+                        onChange={(e) => setNamaLengkap(e.target.value)}
+                        placeholder="Contoh: Oktavia Ramadhani"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              <button type="submit" className="btn-primary-full">
-                Login <span>&rarr;</span>
-              </button>
-            </form>
+                  <div className="form-group">
+                    <label>NIM</label>
+                    <div className="input-box">
+                      <span className="icon-left">👤</span>
+                      <input
+                        type="text"
+                        value={nim}
+                        onChange={(e) => setNim(e.target.value)}
+                        placeholder="Contoh: 2510511006"
+                        required
+                      />
+                    </div>
+                  </div>
 
-            <div className="help-footer">
-              {" "}
-              <button
-                type="button"
-                className="text-btn-green"
-                onClick={() =>
-                  triggerToast(
-                    "Layanan Petugas",
-                    "Menghubungkan ke Helpdesk Perpustakaan UPNVJ...",
-                    "success"
-                  )
-                }
-              >
-                Hubungi petugas ↗
-              </button>
-            </div>
+                  <div className="form-group">
+                    <label>Email Kampus UPNVJ</label>
+                    <div className="input-box">
+                      <span className="icon-left">✉️</span>
+                      <input
+                        type="email"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        placeholder="nim@mahasiswa.upnvj.ac.id"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Password</label>
+                    <div className="input-box">
+                      <span className="icon-left">🔒</span>
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Minimal 6 karakter"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-primary-full">
+                    Daftar Sekarang <span>&rarr;</span>
+                  </button>
+                </form>
+
+                <div className="help-footer">
+                  <span>Sudah punya akun? </span>
+                  <button
+                    type="button"
+                    className="text-btn-green"
+                    onClick={() => setAuthMode("login")}
+                  >
+                    Kembali ke Login
+                  </button>
+                </div>
+              </>
+            )}
+
+            {authMode === "forgot" && (
+              <>
+                <h2>Reset Password</h2>
+                {!otpSent ? (
+                  <form onSubmit={handleSendOtp}>
+                    <div className="form-group">
+                      <label>Email Terdaftar</label>
+                      <div className="input-box">
+                        <span className="icon-left">✉️</span>
+                        <input
+                          type="email"
+                          value={emailInput}
+                          onChange={(e) => setEmailInput(e.target.value)}
+                          placeholder="Masukkan email UPNVJ Anda"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-primary-full">
+                      Kirim Kode OTP <span>&rarr;</span>
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResetPassword}>
+                    <div className="form-group">
+                      <label>Kode OTP 6 Digit</label>
+                      <div className="input-box">
+                        <span className="icon-left">🔑</span>
+                        <input
+                          type="text"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value)}
+                          placeholder="Masukkan 6 digit kode OTP"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label>Password Baru</label>
+                      <div className="input-box">
+                        <span className="icon-left">🔒</span>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Masukkan password baru"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-primary-full">
+                      Simpan Password Baru ✓
+                    </button>
+                  </form>
+                )}
+
+                <div className="help-footer">
+                  <button
+                    type="button"
+                    className="text-btn-green"
+                    onClick={() => setAuthMode("login")}
+                  >
+                    &larr; Kembali ke Login
+                  </button>
+                </div>
+              </>
+            )}
 
             <div className="copyright-text">
               🛡️ &copy; 2026 Perpustakaan UPNVJ &bull; Akses aman kampus
-              <small>API: {apiStatus}</small>
+              <small style={{ display: "block", marginTop: 4 }}>
+                API: {apiStatus}
+              </small>
             </div>
           </div>
         </div>
 
-        {/* TOAST NOTIFICATION POPUP (PDF Hal 2 & 3) */}
         {toast.show && (
           <div className={`floating-toast ${toast.type} bounce-in`}>
             <div className="toast-icon">
@@ -780,17 +946,17 @@ useEffect(() => {
   }
 
   // ============================================================================
-  // LAYOUT UTAMA DASHBOARD MAHASISWA (PDF Hal 4 - 11)
+  // LAYOUT UTAMA DASHBOARD MAHASISWA
   // ============================================================================
-  const currentFloorObj = floors[selectedFloor];
-  const filteredHistory = historyList.filter((item) => {
+  const currentFloorObj = floors[selectedFloor] || INITIAL_FLOORS[3];
+  const safeHistoryList = Array.isArray(historyList) ? historyList : [];
+  const filteredHistory = safeHistoryList.filter((item) => {
     if (historyFilter === "Semua") return true;
     return item.status === historyFilter;
   });
 
   return (
     <div className="dashboard-layout fade-in">
-      {/* SIDEBAR KIRI */}
       <aside className="sidebar">
         <div>
           <div
@@ -826,7 +992,15 @@ useEffect(() => {
               className={`menu-item ${
                 activeMenu === "history" ? "active" : ""
               }`}
-              onClick={() => setActiveMenu("history")}
+              onClick={async () => {
+                setActiveMenu("history");
+                try {
+                  const latestHistory = await getHistory(currentUser.nim);
+                  setHistoryList(Array.isArray(latestHistory) ? latestHistory : []);
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
             >
               <span></span> Riwayat
             </button>
@@ -839,7 +1013,7 @@ useEffect(() => {
             onClick={() =>
               triggerToast(
                 "Pustakawan Online",
-                "Halo Nadia! Ada yang bisa kami bantu terkait ketersediaan kursi?",
+                `Halo ${(currentUser.nama || "Mahasiswa").split(" ")[0]}! Ada yang bisa kami bantu terkait ketersediaan kursi?`,
                 "success"
               )
             }
@@ -850,19 +1024,17 @@ useEffect(() => {
         </div>
       </aside>
 
-      {/* KONTEN UTAMA KANAN */}
       <div className="main-area">
-        {/* TOPBAR HEADER */}
         <header className="topbar">
           <div>
-            <h4>Halo, Nadia </h4>
+            <h4>Halo, {(currentUser.nama || "Mahasiswa").split(" ")[0]}</h4>
           </div>
           <div className="topbar-actions">
             <button
               className="profile-pill"
               onClick={() => setProfileModal(true)}
             >
-              <span className="avatar-np">NP</span> Profil
+              <span className="avatar-np">{userInitials}</span> Profil
             </button>
             <button
               className="logout-btn"
@@ -880,14 +1052,10 @@ useEffect(() => {
           </div>
         </header>
 
-        {/* ISI HALAMAN DINAMIS */}
         <main className="content-container">
-          {/* ============================================================== */}
-          {/* VIEW 1: DASHBOARD HOME (PDF Hal 4) */}
-          {/* ============================================================== */}
+          {/* VIEW 1: DASHBOARD HOME */}
           {activeMenu === "home" && (
             <div className="home-view slide-up">
-
               <h1 className="page-title">
                 Belajar lebih nyaman, mulai di sini.
               </h1>
@@ -895,7 +1063,6 @@ useEffect(() => {
                 Temukan kursi yang pas untuk rencana belajarmu hari ini.
               </p>
 
-              {/* 3 Kartu Statistik Atas */}
               <div className="stats-grid">
                 <div className="stat-card">
                   <div className="stat-header">
@@ -903,7 +1070,7 @@ useEffect(() => {
                     <span className="stat-icon"></span>
                   </div>
                   <h2>
-                    140 <small>kursi</small>
+                    {totalSeatsAll} <small>kursi</small>
                   </h2>
                 </div>
 
@@ -913,7 +1080,7 @@ useEffect(() => {
                     <span className="stat-icon"></span>
                   </div>
                   <h2>
-                    117 <small>kursi</small>
+                    {availableSeatsAll} <small>kursi</small>
                   </h2>
                 </div>
 
@@ -923,12 +1090,11 @@ useEffect(() => {
                     <span className="stat-icon"></span>
                   </div>
                   <h2>
-                    23 <small>kursi</small>
+                    {occupiedSeatsAll} <small>kursi</small>
                   </h2>
                 </div>
               </div>
 
-              {/* Banner Hijau Utama */}
               <div className="cta-banner">
                 <div className="cta-left">
                   <button
@@ -943,12 +1109,11 @@ useEffect(() => {
                 </div>
 
                 <div className="cta-right-box">
-                  <h3>117</h3>
+                  <h3>{availableSeatsAll}</h3>
                   <p>kursi tersedia</p>
                 </div>
               </div>
 
-              {/* Pilih Suasana Belajarmu (3 Lantai) */}
               <h3 className="sub-heading">Pilih suasana belajarmu</h3>
               <div className="floor-cards-grid">
                 {[1, 3, 4].map((fId) => {
@@ -978,13 +1143,11 @@ useEffect(() => {
                           }}
                         ></div>
                       </div>
-    
                     </div>
                   );
                 })}
               </div>
 
-              {/* Klaim kursi dalam 3 langkah */}
               <div className="steps-info-box">
                 <h4>Klaim kursi dalam 3 langkah</h4>
                 <div className="steps-three-col">
@@ -1011,9 +1174,7 @@ useEffect(() => {
             </div>
           )}
 
-          {/* ============================================================== */}
-          {/* VIEW 2: DENAH KURSI & KONFIRMASI (PDF Hal 5, 6, 7, 8, 9, 10) */}
-          {/* ============================================================== */}
+          {/* VIEW 2: DENAH KURSI & KONFIRMASI */}
           {activeMenu === "seats" && (
             <div className="seats-view slide-up">
               <span className="section-tag">KLAIM KURSI</span>
@@ -1024,11 +1185,10 @@ useEffect(() => {
               </h1>
               <p className="page-subtitle">
                 {claimStep === 1
-                  ? "               ."
-                  : "                                                      "}
+                  ? "Klik kursi berwarna hijau pada denah untuk memilih tempat dudukmu."
+                  : "Periksa kembali pilihan kursi dan jadwal sebelum mengklaim."}
               </p>
 
-              {/* Stepper Wizard Interaktif */}
               <div className="stepper-bar">
                 <div
                   className={`step-pill ${claimStep >= 1 ? "active" : ""}`}
@@ -1056,10 +1216,8 @@ useEffect(() => {
                 </div>
               </div>
 
-              {/* STEP 1: TAMPILAN DENAH INTERAKTIF (PDF Hal 5, 6, 7) */}
               {claimStep === 1 && (
                 <>
-                  {/* Tab Pilihan Lantai */}
                   <div className="floor-tabs">
                     {[1, 3, 4].map((fId) => (
                       <button
@@ -1075,7 +1233,6 @@ useEffect(() => {
                     ))}
                   </div>
 
-                  {/* Kotak Kanvas Denah */}
                   <div className="map-card">
                     <div className="map-card-header">
                       <div>
@@ -1090,7 +1247,6 @@ useEffect(() => {
                       </span>
                     </div>
 
-                    {/* Kanvas Kursi Sesuai Lantai */}
                     <div className="map-canvas">
                       <SeatMap
                         floorId={selectedFloor}
@@ -1102,11 +1258,10 @@ useEffect(() => {
                   </div>
 
                   <p className="map-Caption">
-                     Kursi merah sedang digunakan dan tidak dapat dipilih.
+                    Kursi merah sedang digunakan dan tidak dapat dipilih.
                     Ketersediaan diperiksa lagi saat klaim.
                   </p>
 
-                  {/* Bottom Bar Pemilihan Kursi */}
                   <div className="selection-bottom-bar">
                     <div className="selection-info">
                       <div>
@@ -1139,10 +1294,8 @@ useEffect(() => {
                 </>
               )}
 
-              {/* STEP 2: KONFIRMASI PILIHAN & DURASI (PDF Hal 8, 9, 10) */}
               {claimStep >= 2 && (
                 <div className="confirm-container slide-up">
-                  {/* Banner Alert Merah Jika Simulasi Gagal/Bentrok Aktif (PDF Hal 10) */}
                   {conflictSeat && (
                     <div className="conflict-alert-banner bounce-in">
                       <span className="alert-icon">⚠️</span>
@@ -1160,7 +1313,6 @@ useEffect(() => {
                   )}
 
                   <div className="confirm-two-col">
-                    {/* Kolom Kiri: Ringkasan & Pilih Durasi */}
                     <div className="confirm-left-col">
                       <div className="white-card">
                         <div className="card-flex-between">
@@ -1200,7 +1352,7 @@ useEffect(() => {
                           </div>
                           <div>
                             <small>Tanggal</small>
-                            <strong>20 Oktober 2026</strong>
+                            <strong>{selectedDateLabel}</strong>
                           </div>
                           <div>
                             <small>Total kursi</small>
@@ -1210,33 +1362,141 @@ useEffect(() => {
                       </div>
 
                       <div className="white-card">
-                        <h4>Berapa lama kamu belajar?</h4>
+                        <h4>Jadwal & durasi belajar</h4>
                         <p className="card-sub">
-                          Durasi dimulai saat klaim berhasil.
+                          Jam operasional Perpustakaan UPNVJ: 08.00 – 20.00 WIB.
                         </p>
 
-                        <div className="duration-grid">
-                          {[1, 2, 3].map((jam) => (
-                            <button
-                              key={jam}
-                              className={`duration-card ${
-                                duration === jam ? "active" : ""
-                              }`}
-                              onClick={() => setDuration(jam)}
+                        {isLibraryClosedNow && (
+                          <div
+                            style={{
+                              background: "#FEF3C7",
+                              border: "1px solid #F59E0B",
+                              color: "#92400E",
+                              padding: "10px 14px",
+                              borderRadius: "10px",
+                              fontSize: "13px",
+                              marginBottom: "14px",
+                            }}
+                          >
+                            🕒 <strong>Perpustakaan sudah tutup untuk hari ini</strong> (di atas pukul 20.00 WIB). Silakan pilih <strong>tanggal</strong> dan <strong>jam kedatangan</strong> untuk jadwal berikutnya.
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "12px",
+                            marginBottom: "16px",
+                          }}
+                        >
+                          <div>
+                            <label
+                              style={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                display: "block",
+                                marginBottom: 6,
+                              }}
                             >
-                              <div className="dur-top">
-                                <strong>{jam} Jam</strong>
-                                <span className="radio-dot"></span>
-                              </div>
-                              <p>Mulai 10.00 WIB</p>
-                              <small>Selesai {10 + jam}.00 WIB</small>
-                            </button>
-                          ))}
+                              Tanggal Kunjungan
+                            </label>
+                            <input
+                              type="date"
+                              min={isLibraryClosedNow ? tomorrowISO : todayISO}
+                              value={bookingDate}
+                              onChange={(e) => {
+  const val = e.target.value;
+  const pickedDay = new Date(`${val}T00:00:00`).getDay();
+  if (pickedDay === 0) {
+    triggerToast(
+      "Perpustakaan Tutup (Minggu)",
+      "Perpustakaan UPNVJ tutup pada hari Minggu. Silakan pilih Senin–Sabtu.",
+      "error"
+    );
+    return;
+  }
+  setBookingDate(val);
+  if (val === todayISO && startHour < currentHourNow) {
+    setStartHour(Math.max(8, currentHourNow));
+  }
+}}
+                              style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: "10px",
+                                border: "1px solid #CBD5E1",
+                                fontSize: "14px",
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              style={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                display: "block",
+                                marginBottom: 6,
+                              }}
+                            >
+                              Jam Mulai
+                            </label>
+                            <select
+                              value={startHour}
+                              onChange={(e) => setStartHour(Number(e.target.value))}
+                              style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: "10px",
+                                border: "1px solid #CBD5E1",
+                                fontSize: "14px",
+                                background: "#fff",
+                              }}
+                            >
+                              {Array.from({ length: 12 }, (_, i) => i + 8).map((hr) => {
+                                const disabledPast =
+                                  bookingDate === todayISO && hr < currentHourNow;
+                                return (
+                                  <option key={hr} value={hr} disabled={disabledPast}>
+                                    {String(hr).padStart(2, "0")}.00 WIB{" "}
+                                    {disabledPast ? "(Sudah lewat)" : ""}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="duration-grid">
+                          {[1, 2, 3].map((jam) => {
+                            const endHr = Math.min(20, startHour + jam);
+                            return (
+                              <button
+                                key={jam}
+                                type="button"
+                                className={`duration-card ${
+                                  duration === jam ? "active" : ""
+                                }`}
+                                onClick={() => setDuration(jam)}
+                              >
+                                <div className="dur-top">
+                                  <strong>{jam} Jam</strong>
+                                  <span className="radio-dot"></span>
+                                </div>
+                                <p>
+                                  {String(startHour).padStart(2, "0")}.00 –{" "}
+                                  {String(endHr).padStart(2, "0")}.00
+                                </p>
+                                <small>Durasi {jam} jam</small>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
 
-                    {/* Kolom Kanan: Info Sebelum Klaim / Pilih Ulang */}
                     <div className="confirm-right-col">
                       {!conflictSeat ? (
                         <div className="white-card">
@@ -1274,10 +1534,10 @@ useEffect(() => {
                           </ul>
 
                           <div className="user-mini-card">
-                            <div className="avatar-np">NP</div>
+                            <div className="avatar-np">{userInitials}</div>
                             <div>
-                              <strong>Nadia Putri</strong>
-                              <span>NIM 2310511042</span>
+                              <strong>{currentUser.nama}</strong>
+                              <span>NIM {currentUser.nim}</span>
                             </div>
                           </div>
                         </div>
@@ -1307,29 +1567,27 @@ useEffect(() => {
                         </div>
                       )}
 
-                      {/* Tombol Simulasi Bentrok Kursi C12 Sesuai PDF Hal 10 */}
                       <div className="demo-conflict-box">
-                        <span>🛠️ Fitur Demo PDF Hal. 10:</span>
+                        <span>🛠️ Simulasi Bentrok Kursi:</span>
                         <button
                           type="button"
                           className="btn-demo-mini danger"
                           onClick={handleSimulateConflict}
                         >
-                          Simulasikan Kursi C12 Diserobot
+                          Simulasikan Kursi Terisi
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Bottom Bar Konfirmasi */}
                   <div className="selection-bottom-bar">
                     <div>
                       <strong>
                         {selectedSeats.length} kursi &bull; {duration} jam
                       </strong>
                       <p>
-                        20 Okt 2026 &bull; 10.00–{10 + duration}.00 WIB &bull;
-                        Dengan klaim, kamu menyetujui tata tertib perpustakaan.
+                        {selectedDateLabel} &bull; {String(startHour).padStart(2, "0")}.00–
+                        {String(Math.min(20, startHour + duration)).padStart(2, "0")}.00 WIB
                       </p>
                     </div>
                     <div className="bottom-btn-group">
@@ -1352,48 +1610,53 @@ useEffect(() => {
             </div>
           )}
 
-          {/* ============================================================== */}
-          {/* VIEW 3: RIWAYAT KLAIM KURSI (PDF Hal 11) */}
-          {/* ============================================================== */}
+          {/* VIEW 3: RIWAYAT KLAIM KURSI (AMAN ANTI LAYAR PUTIH) */}
           {activeMenu === "history" && (
             <div className="history-view slide-up">
               <span className="section-tag">AKTIVITAS MAHASISWA</span>
               <h1 className="page-title">Riwayat klaim kursi</h1>
               <p className="page-subtitle">
-                Semua tempat dan waktu belajar, tersimpan dalam satu halaman.
+                Semua tempat dan waktu belajar, tersimpan di database Supabase.
               </p>
 
-              {/* Banner Status Kursi Aktif Saat Ini */}
-              {historyList.some((h) => h.status === "Aktif") && (
+              {safeHistoryList.some((h) => h.status === "Aktif") && safeHistoryList[0] && (
                 <div className="active-claim-banner">
                   <div className="active-banner-left">
                     <div className="clock-icon-box">🕒</div>
                     <div>
-                      <strong>Kursimu aktif sampai 12.00 WIB</strong>
+                      <strong>
+                        Kursimu aktif ({safeHistoryList[0].time || "-"})
+                      </strong>
                       <p>
-                        {historyList[0].seats.join(", ")} &bull;{" "}
-                        {historyList[0].floor} &bull; {historyList[0].fullDate}
+                        {(Array.isArray(safeHistoryList[0].seats)
+                          ? safeHistoryList[0].seats
+                          : []
+                        ).join(", ")}{" "}
+                        &bull; {safeHistoryList[0].floor} &bull;{" "}
+                        {safeHistoryList[0].fullDate || safeHistoryList[0].date}
                       </p>
                     </div>
                   </div>
                   <div className="active-banner-right">
-                    <span className="code-pill">{historyList[0].code}</span>
+                    <span className="code-pill">{safeHistoryList[0].code}</span>
                     <strong>
-                      {historyList[0].seats.length} kursi &bull;{" "}
-                      {historyList[0].duration}
+                      {(Array.isArray(safeHistoryList[0].seats)
+                        ? safeHistoryList[0].seats
+                        : []
+                      ).length}{" "}
+                      kursi &bull; {safeHistoryList[0].duration}
                     </strong>
                   </div>
                 </div>
               )}
 
-              {/* Filter Tab Riwayat */}
               <div className="history-Single-bar">
                 <div className="filter-tabs">
                   {["Semua", "Aktif", "Selesai"].map((tab) => {
                     const count =
                       tab === "Semua"
-                        ? historyList.length
-                        : historyList.filter((h) => h.status === tab).length;
+                        ? safeHistoryList.length
+                        : safeHistoryList.filter((h) => h.status === tab).length;
                     return (
                       <button
                         key={tab}
@@ -1407,10 +1670,9 @@ useEffect(() => {
                     );
                   })}
                 </div>
-                <div className="month-picker">📅 Oktober 2026</div>
+                <div className="month-picker">📅 {currentMonthYear}</div>
               </div>
 
-              {/* Tabel Riwayat Klaim */}
               <div className="table-card">
                 <table className="history-table">
                   <thead>
@@ -1425,35 +1687,46 @@ useEffect(() => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredHistory.map((item) => (
-                      <tr key={item.code}>
-                        <td>
-                          <strong>{item.seats.join(", ")}</strong>
-                          <span className="sub-code">{item.code}</span>
-                        </td>
-                        <td>{item.floor}</td>
-                        <td>{item.date}</td>
-                        <td>{item.time}</td>
-                        <td>{item.duration}</td>
-                        <td>
-                          <span
-                            className={`status-badge ${
-                              item.status === "Aktif" ? "aktif" : "selesai"
-                            }`}
-                          >
-                            ● {item.status}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            className="detail-link-btn"
-                            onClick={() => setDetailModalItem(item)}
-                          >
-                            Detail &gt;
-                          </button>
+                    {filteredHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" style={{ textAlign: "center", padding: 24 }}>
+                          Belum ada riwayat klaim untuk akun ini.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredHistory.map((item, idx) => {
+                        const seatList = Array.isArray(item.seats) ? item.seats : [];
+                        return (
+                          <tr key={item.code || idx}>
+                            <td>
+                              <strong>{seatList.join(", ") || "-"}</strong>
+                              <span className="sub-code">{item.code}</span>
+                            </td>
+                            <td>{item.floor}</td>
+                            <td>{item.date}</td>
+                            <td>{item.time}</td>
+                            <td>{item.duration}</td>
+                            <td>
+                              <span
+                                className={`status-badge ${
+                                  item.status === "Aktif" ? "aktif" : "selesai"
+                                }`}
+                              >
+                                ● {item.status}
+                              </span>
+                            </td>
+                            <td>
+                              <button
+                                className="detail-link-btn"
+                                onClick={() => setDetailModalItem(item)}
+                              >
+                                Detail &gt;
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
 
@@ -1475,9 +1748,7 @@ useEffect(() => {
         </main>
       </div>
 
-      {/* ==================================================================== */}
-      {/* MODAL POPUP KLAIM BERHASIL (PERSIS PDF HALAMAN 9) */}
-      {/* ==================================================================== */}
+      {/* MODAL POPUP KLAIM BERHASIL */}
       {showSuccessModal && (
         <div className="modal-overlay fade-in">
           <div className="modal-card bounce-in">
@@ -1490,12 +1761,13 @@ useEffect(() => {
             <div className="modal-success-icon">✓</div>
             <h2>Klaim Kursi Berhasil!</h2>
             <p className="modal-sub">
-              Tempat belajarmu sudah siap, Nadia. Selamat belajar dengan nyaman!
+              Tempat belajarmu sudah siap, {(currentUser.nama || "Mahasiswa").split(" ")[0]}.
+              Selamat belajar dengan nyaman!
             </p>
 
             <div className="ticket-box">
               <div className="ticket-top">
-                <span className="ticket-code">{historyList[0]?.code}</span>
+                <span className="ticket-code">{safeHistoryList[0]?.code}</span>
                 <span className="status-badge aktif">● Aktif</span>
               </div>
               <div className="ticket-row">
@@ -1510,15 +1782,15 @@ useEffect(() => {
               </div>
               <div className="ticket-row">
                 <span>Tanggal</span>
-                <strong>20 Oktober 2026</strong>
+                <strong>{selectedDateLabel}</strong>
               </div>
               <div className="ticket-row">
                 <span>Waktu</span>
-                <strong>10.00–{10 + duration}.00 WIB</strong>
+                <strong>{safeHistoryList[0]?.time}</strong>
               </div>
               <div className="ticket-row">
                 <span>Durasi</span>
-                <strong>{duration} jam</strong>
+                <strong>{safeHistoryList[0]?.duration || `${duration} jam`}</strong>
               </div>
             </div>
 
@@ -1526,6 +1798,7 @@ useEffect(() => {
               className="btn-primary-full"
               onClick={() => {
                 setShowSuccessModal(false);
+                setSelectedSeats([]);
                 setActiveMenu("history");
               }}
             >
@@ -1535,6 +1808,7 @@ useEffect(() => {
               className="btn-ghost-full"
               onClick={() => {
                 setShowSuccessModal(false);
+                setSelectedSeats([]);
                 setActiveMenu("home");
               }}
             >
@@ -1569,7 +1843,12 @@ useEffect(() => {
               </div>
               <div className="ticket-row">
                 <span>Nomor Kursi</span>
-                <strong>{detailModalItem.seats.join(", ")}</strong>
+                <strong>
+                  {(Array.isArray(detailModalItem.seats)
+                    ? detailModalItem.seats
+                    : []
+                  ).join(", ") || "-"}
+                </strong>
               </div>
               <div className="ticket-row">
                 <span>Lokasi</span>
@@ -1608,17 +1887,23 @@ useEffect(() => {
             >
               ✕
             </button>
-            <div className="avatar-np-large">NP</div>
-            <h3>Nadia Putri</h3>
-            <p className="modal-sub">Mahasiswa Aktif &bull; Ilmu Komputer UPNVJ</p>
+            <div className="avatar-np-large">{userInitials}</div>
+            <h3>{currentUser.nama}</h3>
+            <p className="modal-sub">
+              Mahasiswa Aktif &bull; {currentUser.fakultas} UPNVJ
+            </p>
             <div className="ticket-box">
               <div className="ticket-row">
                 <span>NIM</span>
-                <strong>2310511042</strong>
+                <strong>{currentUser.nim}</strong>
+              </div>
+              <div className="ticket-row">
+                <span>Email</span>
+                <strong>{currentUser.email}</strong>
               </div>
               <div className="ticket-row">
                 <span>Fakultas</span>
-                <strong>Ilmu Komputer</strong>
+                <strong>{currentUser.fakultas}</strong>
               </div>
               <div className="ticket-row">
                 <span>Status Akun</span>

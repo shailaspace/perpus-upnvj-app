@@ -1,0 +1,7 @@
+# File rahasia & environment
+.env
+*.env
+backend/.env
+
+# Folder dependencies (sekalian pastikan tidak ikut ter-push)
+node_modules/
