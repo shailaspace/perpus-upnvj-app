@@ -53,3 +53,4 @@ Desktop.ini
 
 # Vite cache
 frontend/node_modules/.vite/
+.vercel
