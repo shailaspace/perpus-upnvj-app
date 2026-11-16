@@ -33,24 +33,38 @@ const FLOOR_META = {
   },
 };
 
-async function fetchFloorsFromSupabase() {
-  // 1. Sinkronkan status riwayat_klaim berdasarkan jam sekarang
+async function fetchFloorsFromSupabase(targetDateParam) {
   await supabase.rpc("sync_status_kursi");
 
-  // 2. Ambil daftar kursi dan daftar klaim yang sedang 'Aktif' saat ini
-  const [{ data: seatsData, error: seatsErr }, { data: activeClaims }] = await Promise.all([
+  const todayJakarta = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Jakarta",
+  });
+  const checkDate = targetDateParam || todayJakarta;
+
+  const [{ data: seatsData, error: seatsErr }, { data: claimsData }] = await Promise.all([
     supabase.from("kursi").select("*").order("id"),
-    supabase.from("riwayat_klaim").select("lantai, daftar_kursi").eq("status", "Aktif"),
+    supabase
+      .from("riwayat_klaim")
+      .select("lantai, daftar_kursi, status, mulai_at")
+      .in("status", ["Aktif", "Terjadwal"]),
   ]);
 
   if (seatsErr) throw seatsErr;
 
-  // Kumpulkan ID kursi yang benar-benar sedang dipakai sekarang (status = 'Aktif')
   const occupiedSet = new Set();
-  (activeClaims || []).forEach((claim) => {
-    (claim.daftar_kursi || []).forEach((seatId) => {
-      occupiedSet.add(`${claim.lantai}-${seatId}`);
-    });
+  (claimsData || []).forEach((claim) => {
+    const claimDateJakarta = claim.mulai_at
+      ? new Date(claim.mulai_at).toLocaleDateString("en-CA", {
+          timeZone: "Asia/Jakarta",
+        })
+      : todayJakarta;
+
+    // Merah jika kursi sudah dipesan ('Aktif' atau 'Terjadwal') pada tanggal yang sedang dilihat di denah
+    if (claimDateJakarta === checkDate) {
+      (claim.daftar_kursi || []).forEach((seatId) => {
+        occupiedSet.add(`${claim.lantai}-${seatId}`);
+      });
+    }
   });
 
   const result = {};
@@ -73,9 +87,13 @@ async function fetchFloorsFromSupabase() {
   return result;
 }
 
-// 1. CEK STATUS API
-app.get("/api/status", (req, res) => {
-  res.json({ message: "Backend + Supabase Perpustakaan UPNVJ aktif" });
+app.get("/api/floors", async (req, res) => {
+  try {
+    const floors = await fetchFloorsFromSupabase(req.query.date);
+    res.json(floors);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // 2. AMBIL DATA KURSI PER LANTAI (DINAMIS)
