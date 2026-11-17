@@ -1,5 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 export async function getApiStatus() {
   const res = await fetch(`${API_URL}/status`);
   if (!res.ok) throw new Error("Backend offline");

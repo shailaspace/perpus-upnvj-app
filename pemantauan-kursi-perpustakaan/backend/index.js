@@ -287,4 +287,11 @@ if (require.main === module) {
   });
 }
 
+app.get("/api/status", (req, res) => {
+  res.json({
+    status: "success",
+    message: "Backend berhasil terhubung!"
+  });
+});
+
 module.exports = app;
