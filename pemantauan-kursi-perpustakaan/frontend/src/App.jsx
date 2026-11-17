@@ -1593,15 +1593,6 @@ const tomorrowISO = formatDateISO(nextOpenDayObj);
                         </div>
                       ) : (
                         <div className="white-card conflict-side-card">
-                          <h4>Pilih ulang dengan mudah</h4>
-                          <p>
-                            Kembali ke denah untuk melihat ketersediaan terbaru.
-                            Pilih kursi pengganti, lalu konfirmasi kembali
-                            durasi belajarmu.
-                          </p>
-                          <div className="empty-record-note">
-                            Belum ada klaim yang tercatat di riwayat.
-                          </div>
                         </div>
                       )}
 
