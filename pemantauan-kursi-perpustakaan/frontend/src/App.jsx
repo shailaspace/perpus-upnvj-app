@@ -1602,18 +1602,6 @@ const tomorrowISO = formatDateISO(nextOpenDayObj);
                           <div className="empty-record-note">
                             Belum ada klaim yang tercatat di riwayat.
                           </div>
-                          <button
-                            className="btn-outline-full"
-                            onClick={() => {
-                              setSelectedSeats(
-                                selectedSeats.filter((s) => s !== conflictSeat)
-                              );
-                              setConflictSeat(null);
-                              setClaimStep(1);
-                            }}
-                          >
-                            &larr; Kembali ke Denah & Pilih Pengganti
-                          </button>
                         </div>
                       )}
 
