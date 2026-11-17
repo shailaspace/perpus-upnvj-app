@@ -2598,29 +2598,6 @@ body {
 }
 
 
-
-.demo-conflict-box {
-
-  background: #fffbeb;
-
-  border: 1px dashed #f59e0b;
-
-  padding: 12px;
-
-  border-radius: 10px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  font-size: 12px;
-
-}
-
-
-
 .bottom-btn-group {
 
   display: flex;
