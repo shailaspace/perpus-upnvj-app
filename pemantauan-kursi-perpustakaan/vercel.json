@@ -1,12 +1,13 @@
+
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "backend": {
-      "root": "pemantauan-kursi-perpustakaan/backend",
+      "root": "backend",
       "framework": "express"
     },
     "frontend": {
-      "root": "pemantauan-kursi-perpustakaan/frontend",
+      "root": "frontend",
       "framework": "vite"
     }
   },
