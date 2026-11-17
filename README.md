@@ -1,6 +1,6 @@
 # 📚 Portal Mahasiswa: Sistem Pemantauan & Pemilihan Kursi Perpustakaan UPNVJ
 
-🔗🔗https://sistem-booking-perpustakaan-p898.vercel.app/
+🔗https://sistem-booking-perpustakaan-p898.vercel.app/
 
 Sistem informasi berbasis web (*Web-based Platform*) untuk memantau ketersediaan kursi perpustakaan secara *real-time* dan memfasilitasi klaim tempat duduk menggunakan pemindaian QR Code. Proyek ini dikembangkan untuk memenuhi tugas mata kuliah Manajemen Proyek Perangkat Lunak (MPPL) di Universitas Pembangunan Nasional "Veteran" Jakarta.
 
