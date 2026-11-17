@@ -1618,14 +1618,6 @@ const tomorrowISO = formatDateISO(nextOpenDayObj);
                       )}
 
                       <div className="demo-conflict-box">
-                        <span>🛠️ Simulasi Bentrok Kursi:</span>
-                        <button
-                          type="button"
-                          className="btn-demo-mini danger"
-                          onClick={handleSimulateConflict}
-                        >
-                          Simulasikan Kursi Terisi
-                        </button>
                       </div>
                     </div>
                   </div>
