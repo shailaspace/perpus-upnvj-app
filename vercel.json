@@ -3,11 +3,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "backend": {
-      "root": "backend",
+      "root": "pemantauan-kursi-perpustakaan/backend",
       "framework": "express"
     },
     "frontend": {
-      "root": "frontend",
+      "root": "pemantauan-kursi-perpustakaan/frontend",
       "framework": "vite"
     }
   },
